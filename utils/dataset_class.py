@@ -46,16 +46,12 @@ class DatasetClass(Dataset):
         image = cv2.imread(self.images_path[index], cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        mask = cv2.imread(self.masks_path[index], cv2.IMREAD_GRAYSCALE) #/255
-#         assert mask.min() >= 0 and mask.max() < self.num_classes, \
-#             f"Маска содержит значения вне диапазона [0, {self.num_classes-1}]"
-        
+        mask = cv2.imread(self.masks_path[index], cv2.IMREAD_GRAYSCALE)
+
         if self.transforms:
             aug= self.transforms(image=image, mask=mask)
             image, mask = aug['image'], aug['mask']
 
-#         mask = mask.float() / 255.0
-#         mask = mask.unsqueeze(0)
+
         mask = torch.tensor(mask, dtype=torch.long)
         return image, mask
-#         return image, mask.float()
