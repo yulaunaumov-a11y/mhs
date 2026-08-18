@@ -1,0 +1,148 @@
+project:
+    name: Multiclass_Segmentation_Buildings_UAV
+    path_weights: ./model_weights
+    web_host: 
+    api_host:
+    files_host: 
+    key:
+    secret:
+training:
+    batch_size_train: 4
+    batch_size_test: 4
+    num_workers: 1
+    device: cuda
+    epochs: 200
+
+model:
+    encoder_name: timm-efficientnet-b4
+    # encoder_name: mit_b1
+    # encoder_name: inceptionv4
+    encoder_weights: imagenet
+    in_channels: 3
+    classes: 5
+    activation: softmax
+
+visualization:
+    THRESHOLD: 0.5
+
+focalloss:
+    beta: 3.0
+
+task:
+    mode: multiclass
+    num_classes: 5
+    labels:
+        - Background
+        - single roof
+        - industrial
+        - apartment
+        - multi roof
+
+path:
+    image_path: ./datasets/prepared_dataset2
+
+optimizer:
+    __name__: torch.optim.AdamW
+    lr: 0.0001
+
+criterion:
+    __name__: torch.nn.CrossEntropyLoss
+
+scheduler:
+    __name__: torch.optim.lr_scheduler.CosineAnnealingLR
+    T_max: 30 
+    eta_min: 0.000001
+
+augmentations:
+
+    train:
+        transform:
+            __class_fullname__: albumentations.core.composition.Compose
+            p: 1
+            transforms:
+
+                  # Геометрические преобразования
+                - __class_fullname__: albumentations.augmentations.transforms.HorizontalFlip
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.VerticalFlip
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.RandomRotate90
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.ShiftScaleRotate
+                  shift_limit: 0.2
+                  scale_limit: 0.2
+                  rotate_limit: 180
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.ElasticTransform
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.ChannelShuffle
+                  p: 0.25
+                - __class_fullname__: albumentations.augmentations.transforms.Affine
+                  p: 0.5
+                - __class_fullname__: albumentations.augmentations.transforms.RandomGridShuffle
+                  grid: [4, 4]
+                  p: 0.25
+                # - __class_fullname__: albumentations.augmentations.transforms.CoarseDropout
+                #   max_holes: 16
+                #   max_height: 16
+                #   max_width: 16
+                #   min_holes: 4
+                #   min_height: 8
+                #   min_width: 8
+                #   fill_value: 0
+                #   mask_fill_value: True
+                #   p: 0.2
+
+                # Шумы
+                - __class_fullname__: albumentations.augmentations.transforms.MedianBlur
+                  p: 0.25
+
+                  # Цветовые преобразования
+                - __class_fullname__: albumentations.augmentations.transforms.ColorJitter
+                  brightness: 0.2
+                  contrast: 0.2
+                  saturation: 0.2
+                  hue: 0.1
+                  p: 0.4
+
+                - __class_fullname__: albumentations.augmentations.transforms.RandomCrop
+                  height: 1024
+                  width: 1024
+                  p: 1.0
+
+#                 - __class_fullname__: albumentations.augmentations.transforms.Resize
+#                   height: 2048
+#                   width: 2048
+#                   p: 1.0
+
+                # Нормализация и преобразование в тензор
+                - __class_fullname__: albumentations.augmentations.transforms.Normalize
+                  mean: [0.485, 0.456, 0.406]
+                  std: [0.229, 0.224, 0.225]
+                  max_pixel_value: 255.0
+                  p: 1.0
+                - __class_fullname__: albumentations.augmentations.transforms.ToTensorV2
+                  transpose_mask: false
+                  p: 1
+
+    test:
+        transform:
+            __class_fullname__: albumentations.core.composition.Compose
+            p: 1
+            transforms:
+                - __class_fullname__: albumentations.augmentations.transforms.RandomCrop
+                  height: 1024
+                  width: 1024
+                  p: 1.0
+                # - __class_fullname__: albumentations.augmentations.transforms.Resize
+                #   height: 1024
+                #   width: 1024
+                #   p: 1.0
+                - __class_fullname__: albumentations.augmentations.transforms.Normalize
+                  mean: [0.485, 0.456, 0.406]
+                  std: [0.229, 0.224, 0.225]
+                  max_pixel_value: 255.0
+                  p: 1.0
+                - __class_fullname__: albumentations.augmentations.transforms.ToTensorV2
+                  transpose_mask: false
+                  p: 1
